@@ -418,7 +418,7 @@ def main():
     target_os, target_arch = parse_target(args.target)
 
     script_dir = Path(__file__).parent.resolve()
-    dll_source_dir = script_dir / 'DLL'
+dll_source_dir = script_dir / 'DEPENDENCIES'
 
     MODULE_DLLS = {
         'MODULE/ctrlvamp.nim': {'pcre64DllData_b64': 'pcre64.dll'},

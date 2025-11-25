@@ -1,5 +1,3 @@
-## Overview
-
 **RABIDS** (Roving Autonomous Bartmoss Interface Drones) is a comprehensive framework for building custom offensive security payloads. It provides a powerful yet intuitive graphical interface to chain together various modules—such as ransomware, clipboard hijackers, and persistence loaders—into a single, compiled executable for Windows, Linux, or macOS.
 
 This tool is designed for security researchers, red teamers, and educational purposes to simulate advanced adversaries and study malware behavior in a controlled environment.
