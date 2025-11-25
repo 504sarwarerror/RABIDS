@@ -2,3 +2,7 @@
 .LOOT
 path
 rabids_config.json
+LOOT/payload.exe
+LOOT/libssl-1_1-x64.dll
+LOOT/libcrypto-1_1-x64.dll
+LOOT/cacert.pem
