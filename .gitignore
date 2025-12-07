@@ -7,3 +7,4 @@ LOOT/libssl-1_1-x64.dll
 LOOT/libcrypto-1_1-x64.dll
 LOOT/cacert.pem
 node_modules
+__pycache__

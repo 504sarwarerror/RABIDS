@@ -22,13 +22,36 @@ class DocsWidget(QWidget):
         self.docs_text.setFont(subtitle_font)
         self.docs_text.setReadOnly(True)
 
-        doc_path = os.path.join(self.script_dir, "DOC.md")
-        try:
-            with open(doc_path, 'r', encoding='utf-8') as f:
-                doc_content = f.read()
-            self.docs_text.setMarkdown(doc_content)
-        except FileNotFoundError:
-            self.docs_text.setText("Error: DOC.md not found.")
+        # Embedded documentation (previously in DOC.md)
+        DOC_CONTENT = """
+# RABIDS
 
+RABIDS is a modular framework for building payloads and tooling. This in-application documentation provides installation instructions, usage notes, and brief descriptions of available modules.
+
+## Getting Started
+
+1. Install UI dependencies:
+
+```
+pip install PyQt5 discord
+```
+
+2. Run the application:
+
+```
+python3 main.py
+```
+
+## Features
+
+- Modular payload composition
+- Cross-platform compilation (Windows/Linux/macOS)
+- Optional Docker-based obfuscation
+- Integrated C2 and build UI
+
+Refer to the repository README for more details.
+"""
+
+        self.docs_text.setMarkdown(DOC_CONTENT)
         self.docs_text.setStyleSheet("background-color: #0e0e0e;")
         layout.addWidget(self.docs_text)

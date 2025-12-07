@@ -2,10 +2,10 @@ import os
 from pathlib import Path
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLineEdit, 
-    QLabel, QGroupBox, QListWidget, QListWidgetItem, QFileDialog
+    QLabel, QGroupBox, QListWidget, QListWidgetItem, QFileDialog, QApplication
 )
 from PyQt5.QtGui import QFont, QPixmap
-from PyQt5.QtCore import Qt, pyqtSignal, QApplication
+from PyQt5.QtCore import Qt, pyqtSignal
 
 
 class GarbageCollectorWidget(QWidget):
