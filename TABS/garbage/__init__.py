@@ -1,0 +1,1 @@
+from .garbage import GarbageCollectorWidget

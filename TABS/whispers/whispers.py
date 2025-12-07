@@ -173,9 +173,9 @@ class SilentWhispersWidget(QWidget):
         main_layout.setSpacing(10)
         title_font = QFont()
         title_font.setBold(True)
-        title_font.setPointSize(12)
+        title_font.setPointSize(9)
         subtitle_font = QFont()
-        subtitle_font.setPointSize(10)
+        subtitle_font.setPointSize(9)
         top_section = QHBoxLayout()
         top_section.setSpacing(15)
         qr_container = QVBoxLayout()
@@ -185,11 +185,11 @@ class SilentWhispersWidget(QWidget):
         self.qr_label.setFixedSize(160, 160)
         self.qr_label.setStyleSheet("""
             QLabel {
-                border: 1px solid #2a2a2e;
-                border-radius: 10px;
-                background-color: #1D1D1F;
-                color: #666;
-                font-size: 11px;
+                border: 1px solid #2a2a2a;
+                border-radius: 4px;
+                background-color: #141414;
+                color: #606060;
+                font-size: 9pt;
             }
         """)
         qr_container.addWidget(self.qr_label)
@@ -200,7 +200,7 @@ class SilentWhispersWidget(QWidget):
         qr_container.addWidget(self.wa_web_btn)
         self.wa_web_status = QLabel("Disconnected")
         self.wa_web_status.setAlignment(Qt.AlignCenter)
-        self.wa_web_status.setStyleSheet("color: #FF3B30; font-size: 10px;")
+        self.wa_web_status.setStyleSheet("color: #808080; font-size: 9pt;")
         qr_container.addWidget(self.wa_web_status)
         top_section.addLayout(qr_container)
         controls_container = QVBoxLayout()
@@ -231,13 +231,14 @@ class SilentWhispersWidget(QWidget):
         self.spam_btn.clicked.connect(self.start_reaction_spam)
         self.spam_btn.setStyleSheet("""
             QPushButton {
-                background-color: #34C759;
-                color: white;
-                border-radius: 10px;
-                padding: 8px;
+                background-color: #ffffff;
+                color: #0a0a0a;
+                border-radius: 4px;
+                padding: 6px 12px;
+                font-weight: bold;
             }
-            QPushButton:hover { background-color: #2DB84D; }
-            QPushButton:disabled { background-color: #1D1D1F; color: #555; }
+            QPushButton:hover { background-color: #e0e0e0; }
+            QPushButton:disabled { background-color: #1a1a1a; color: #555; }
         """)
         btn_row.addWidget(self.spam_btn)
         self.stop_spam_btn = QPushButton("STOP SPAM")
@@ -246,13 +247,13 @@ class SilentWhispersWidget(QWidget):
         self.stop_spam_btn.setEnabled(False)
         self.stop_spam_btn.setStyleSheet("""
             QPushButton {
-                background-color: #FF3B30;
-                color: white;
-                border-radius: 10px;
-                padding: 8px;
+                background-color: #303030;
+                color: #d0d0d0;
+                border-radius: 4px;
+                padding: 6px 12px;
             }
-            QPushButton:hover { background-color: #E0342B; }
-            QPushButton:disabled { background-color: #1D1D1F; color: #555; }
+            QPushButton:hover { background-color: #404040; }
+            QPushButton:disabled { background-color: #1a1a1a; color: #555; }
         """)
         btn_row.addWidget(self.stop_spam_btn)
         controls_container.addLayout(btn_row)
@@ -262,10 +263,11 @@ class SilentWhispersWidget(QWidget):
         self.log_output.setFont(subtitle_font)
         self.log_output.setStyleSheet("""
             QTextEdit {
-                background-color: #1D1D1F;
-                border-radius: 5px;
-                color: #888;
-                font-size: 9px;
+                background-color: #0e0e0e;
+                border: 1px solid #1a1a1a;
+                border-radius: 4px;
+                color: #808080;
+                font-size: 9pt;
                 padding: 4px;
             }
         """)
@@ -273,7 +275,7 @@ class SilentWhispersWidget(QWidget):
         top_section.addLayout(controls_container, 1)
         main_layout.addLayout(top_section)
         if MATPLOTLIB_AVAILABLE:
-            self.figure = Figure(figsize=(8, 3), dpi=100, facecolor='#111113')
+            self.figure = Figure(figsize=(8, 3), dpi=100, facecolor='#0a0a0a')
             self.canvas = FigureCanvas(self.figure)
             self.ax = self.figure.add_subplot(111)
             self._style_graph()
@@ -298,23 +300,23 @@ class SilentWhispersWidget(QWidget):
         self.log_message("[+] Ready", "success")
     def _style_graph(self):
         """Apply dark theme to graph matching main app"""
-        self.ax.set_facecolor('#1D1D1F')
-        self.ax.tick_params(colors='#666', labelsize=8)
-        self.ax.xaxis.label.set_color('#888')
-        self.ax.yaxis.label.set_color('#888')
+        self.ax.set_facecolor('#0e0e0e')
+        self.ax.tick_params(colors='#606060', labelsize=8)
+        self.ax.xaxis.label.set_color('#808080')
+        self.ax.yaxis.label.set_color('#808080')
         self.ax.set_xlabel('Iteration', fontsize=9)
         self.ax.set_ylabel('Time (ms)', fontsize=9)
         for spine in self.ax.spines.values():
-            spine.set_color('#2a2a2e')
-        self.ax.grid(True, alpha=0.1, color='#444')
+            spine.set_color('#1a1a1a')
+        self.ax.grid(True, alpha=0.1, color='#303030')
     def log_message(self, message, msg_type="system"):
         """Add a message to the log output"""
         color_map = {
-            "success": "#00B85B",
-            "error": "#FF3B30",
-            "system": "#00A9FD"
+            "success": "#ffffff",
+            "error": "#808080",
+            "system": "#a0a0a0"
         }
-        color = color_map.get(msg_type, "#e0e0e0")
+        color = color_map.get(msg_type, "#c0c0c0")
         self.log_output.append(f'<span style="color: {color};">{message}</span>')
     def toggle_whatsapp_client(self):
         """Start or stop the WhatsApp Web client"""
@@ -336,7 +338,7 @@ class SilentWhispersWidget(QWidget):
             self.whatsapp_thread.start()
             self.wa_web_status.setText("Status: Starting...")
             self.wa_web_btn.setText("Stop WhatsApp Client")
-            self.wa_web_btn.setStyleSheet("background-color: #d32f2f; color: white;")
+            self.wa_web_btn.setStyleSheet("background-color: #303030; color: #d0d0d0;")
     def display_qr_code(self, qr_data):
         """Generate and display QR code from data"""
         try:
@@ -359,12 +361,12 @@ class SilentWhispersWidget(QWidget):
     def update_client_status(self, is_ready):
         if is_ready:
             self.wa_web_status.setText("Status: Connected & Ready")
-            self.wa_web_status.setStyleSheet("color: #4caf50;")
+            self.wa_web_status.setStyleSheet("color: #ffffff; font-size: 9pt;")
             self.qr_label.setText("Connected to WhatsApp Web")
             self.qr_label.setPixmap(QPixmap())
         else:
             self.wa_web_status.setText("Status: Disconnected")
-            self.wa_web_status.setStyleSheet("color: #f44336;")
+            self.wa_web_status.setStyleSheet("color: #606060; font-size: 9pt;")
     def send_whatsapp_message(self):
         """Send WhatsApp message using Node.js bridge"""
         phone_number = self.phone_input.text().strip()
@@ -463,7 +465,7 @@ class SilentWhispersWidget(QWidget):
         self.is_spamming = False
         self.spam_btn.setText("START SPAM")
         self.spam_btn.setEnabled(True)
-        self.spam_btn.setStyleSheet("background-color: #34C759; color: white;")
+        self.spam_btn.setStyleSheet("background-color: #ffffff; color: #0a0a0a; font-weight: bold;")
         self.stop_spam_btn.setEnabled(False)
         self.send_btn.setEnabled(True)
     def handle_spam_data(self, data):
@@ -492,7 +494,7 @@ class SilentWhispersWidget(QWidget):
         indices = self.spam_data['indices']
         if indices and self.spam_data['iteration_times']:
             self.ax.scatter(indices, self.spam_data['iteration_times'], 
-                          c='#FF6B9D', s=6, alpha=0.9, edgecolors='none', linewidths=0)
+                          c='#ffffff', s=6, alpha=0.9, edgecolors='none', linewidths=0)
         self.canvas.draw()
     def clear_graph(self):
         """Clear the graph and reset data"""

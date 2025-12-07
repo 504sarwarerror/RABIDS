@@ -1,0 +1,1 @@
+from .krash import KrashWidget
